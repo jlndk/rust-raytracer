@@ -5,6 +5,7 @@ pub trait Vec3Extension {
     fn rand() -> Vec3;
     fn rand_range(min: f32, max: f32) -> Vec3;
     fn random_in_unit_sphere() -> Vec3;
+    fn random_in_unit_disk() -> Vec3;
     fn random_unit_vector() -> Vec3;
     fn is_near_zero(&self) -> bool;
     fn reflect_in(self, n: Vec3) -> Vec3;
@@ -25,6 +26,20 @@ impl Vec3Extension for Vec3 {
     fn random_in_unit_sphere() -> Vec3 {
         loop {
             let p = Vec3::rand_range(-1.0, 1.0);
+
+            if p.length_squared() >= 1.0 {
+                continue;
+            }
+
+            return p;
+        }
+    }
+
+    fn random_in_unit_disk() -> Vec3 {
+        let mut rng = thread_rng();
+
+        loop {
+            let p = Vec3::new(rng.gen_range(-1.0..=1.0), rng.gen_range(-1.0..=1.0), 0.0);
 
             if p.length_squared() >= 1.0 {
                 continue;

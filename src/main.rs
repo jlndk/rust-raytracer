@@ -49,8 +49,15 @@ fn main() {
     world.add(Box::new(Sphere::new(Vec3::new( 1.0,    0.0, -1.0),   0.5, &MATERIAL_RIGHT)));
 
     // Camera
-    let fov = 90.0;
-    let camera = Camera::new(Vec3::new(-2.0, 2.0, 1.0), Vec3::new(0.0, 0.0, -1.0), Vec3::new(0.0, 1.0, 0.0), fov, aspect_ratio);
+    let lookfrom = Vec3::new(3.0, 3.0, 2.0);
+    let lookat = Vec3::new(0.0, 0.0, -1.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+
+    let fov = 20.0;
+    let aperture = 2.0;
+    let dist_to_focus = (lookfrom-lookat).length();
+
+    let camera = Camera::new(lookfrom, lookat, vup, fov, aspect_ratio, aperture, dist_to_focus);
 
     println!("P3");
     println!("{0} {1}", image_width, image_height);

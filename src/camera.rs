@@ -1,12 +1,16 @@
 use glam::Vec3;
 
 use crate::ray::Ray;
+use crate::vec3::Vec3Extension;
 
 pub struct Camera {
     origin: Vec3,
     lower_left_corner: Vec3,
     horizontal: Vec3,
     vertical: Vec3,
+    u: Vec3,
+    v: Vec3,
+    lens_radius: f32,
 }
 
 impl Camera {
@@ -16,6 +20,8 @@ impl Camera {
         vup: Vec3,
         vfov: f32, // vertical field-of-view in degrees
         aspect_ratio: f32,
+        aperture: f32,
+        focus_distance: f32,
     ) -> Self {
         let theta = vfov.to_radians();
         let h = (theta / 2.0).tan();
@@ -27,16 +33,21 @@ impl Camera {
         let v = w.cross(u);
 
         let origin = lookfrom;
-        let horizontal = viewport_width * u;
-        let vertical = viewport_height * v;
-        let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - w;
+        let horizontal = focus_distance * viewport_width * u;
+        let vertical = focus_distance * viewport_height * v;
+        let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - focus_distance * w;
 
-        Self { origin, horizontal, vertical, lower_left_corner }
+        let lens_radius = aperture / 2.0;
+
+        Self { origin, horizontal, vertical, lower_left_corner, u, v, lens_radius }
     }
 
     pub fn get_ray(&self, s: f32, t: f32) -> Ray {
-        let direction = self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin;
+        let rd = self.lens_radius * Vec3::random_in_unit_disk();
+        let offset = self.u * rd.x + self.v * rd.y;
 
-        return Ray::new(self.origin, direction);
+        let direction = self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset;
+
+        return Ray::new(self.origin + offset, direction);
     }
 }
