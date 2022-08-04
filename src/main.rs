@@ -39,8 +39,8 @@ fn main() {
 
     const MATERIAL_GROUND: Lambertian = Lambertian::new(Vec3::new(0.8, 0.8, 0.0));
     const MATERIAL_CENTER: Lambertian = Lambertian::new(Vec3::new(0.7, 0.3, 0.3));
-    const MATERIAL_LEFT: Metal = Metal::new(Vec3::new(0.8, 0.8, 0.8));
-    const MATERIAL_RIGHT: Metal = Metal::new(Vec3::new(0.8, 0.6, 0.2));
+    const MATERIAL_LEFT: Metal = Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.3);
+    const MATERIAL_RIGHT: Metal = Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.3);
 
     world.add(Box::new(Sphere::new(Vec3::new( 0.0, -100.5, -1.0), 100.0, &MATERIAL_GROUND)));
     world.add(Box::new(Sphere::new(Vec3::new( 0.0,    0.0, -1.0),   0.5, &MATERIAL_CENTER)));
