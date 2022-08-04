@@ -17,6 +17,7 @@ use camera::Camera;
 use material::ScatterResult;
 use material::Lambertian;
 use material::Metal;
+use material::Dielectric;
 
 
 // STATIC COLORS
@@ -38,9 +39,9 @@ fn main() {
     let mut world = HittableList::new();
 
     const MATERIAL_GROUND: Lambertian = Lambertian::new(Vec3::new(0.8, 0.8, 0.0));
-    const MATERIAL_CENTER: Lambertian = Lambertian::new(Vec3::new(0.7, 0.3, 0.3));
-    const MATERIAL_LEFT: Metal = Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.3);
-    const MATERIAL_RIGHT: Metal = Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.3);
+    const MATERIAL_CENTER: Lambertian = Lambertian::new(Vec3::new(0.1, 0.2, 0.5));
+    const MATERIAL_LEFT: Dielectric   = Dielectric::new(1.5);
+    const MATERIAL_RIGHT: Metal = Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0);
 
     world.add(Box::new(Sphere::new(Vec3::new( 0.0, -100.5, -1.0), 100.0, &MATERIAL_GROUND)));
     world.add(Box::new(Sphere::new(Vec3::new( 0.0,    0.0, -1.0),   0.5, &MATERIAL_CENTER)));
@@ -48,9 +49,8 @@ fn main() {
     world.add(Box::new(Sphere::new(Vec3::new( 1.0,    0.0, -1.0),   0.5, &MATERIAL_RIGHT)));
 
     // Camera
-    let viewport_height = 2.0;
-    let focal_length = 1.0;
-    let camera = Camera::new(aspect_ratio, viewport_height, focal_length);
+    let fov = 90.0;
+    let camera = Camera::new(Vec3::new(-2.0, 2.0, 1.0), Vec3::new(0.0, 0.0, -1.0), Vec3::new(0.0, 1.0, 0.0), fov, aspect_ratio);
 
     println!("P3");
     println!("{0} {1}", image_width, image_height);

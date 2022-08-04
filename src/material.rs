@@ -1,4 +1,5 @@
 use glam::Vec3;
+use rand::Rng;
 
 use crate::ray::Ray;
 use crate::hittable::HitRecord;
@@ -70,6 +71,52 @@ impl Material for Metal {
         let result = ScatterResult {
             scattered,
             attenuation: self.albedo,
+        };
+
+        return Some(result);
+    }
+}
+
+pub struct Dielectric {
+    index_of_refraction: f32,
+}
+
+impl Dielectric {
+    pub const fn new(index_of_refraction: f32) -> Self {
+        return Self { index_of_refraction };
+    }
+
+    fn reflectance(cosine: f32, ref_idx: f32) -> f32 {
+        // Use Schlick's approximation for reflectance.
+        let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        r0 *= r0;
+        return r0 + (1.0 - r0) * (1.0 - cosine).powi(5);
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<ScatterResult> {
+        let unit_direction = ray_in.direction.normalize();
+        let cos_theta = (-unit_direction).dot(hit_record.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let refraction_ratio = match hit_record.front_face {
+            true => (1.0/self.index_of_refraction),
+            false => self.index_of_refraction,
+        };
+
+        let can_refract = refraction_ratio * sin_theta <= 1.0;
+
+        let mut rng = rand::thread_rng();
+
+        let direction = match can_refract || Dielectric::reflectance(cos_theta, refraction_ratio) > rng.gen_range(0.0..1.0) {
+            true => unit_direction.refract_off(hit_record.normal, refraction_ratio),
+            false => unit_direction.reflect_in(hit_record.normal)
+        };
+
+        let result = ScatterResult {
+            scattered: Ray::new(hit_record.point, direction),
+            attenuation: Vec3::ONE,
         };
 
         return Some(result);
