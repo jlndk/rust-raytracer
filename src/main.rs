@@ -7,13 +7,16 @@ mod hittable;
 mod sphere;
 mod camera;
 mod vec3;
+mod material;
 
 use ray::Ray;
 use hittable_list::HittableList;
 use hittable::Hittable;
 use sphere::Sphere;
 use camera::Camera;
-use vec3::RandomVec3;
+use material::ScatterResult;
+use material::Lambertian;
+use material::Metal;
 
 
 // STATIC COLORS
@@ -25,15 +28,24 @@ fn main() {
     // Image
     let aspect_ratio = 16.0 / 9.0;
     let image_width = 400;
+    // let image_width = 1920;
     let image_height = (image_width as f32 / aspect_ratio) as i32;
 
-    let samples_per_pixel = 20;
+    let samples_per_pixel = 50;
     let max_depth = 12;
 
     // World
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+
+    const MATERIAL_GROUND: Lambertian = Lambertian::new(Vec3::new(0.8, 0.8, 0.0));
+    const MATERIAL_CENTER: Lambertian = Lambertian::new(Vec3::new(0.7, 0.3, 0.3));
+    const MATERIAL_LEFT: Metal = Metal::new(Vec3::new(0.8, 0.8, 0.8));
+    const MATERIAL_RIGHT: Metal = Metal::new(Vec3::new(0.8, 0.6, 0.2));
+
+    world.add(Box::new(Sphere::new(Vec3::new( 0.0, -100.5, -1.0), 100.0, &MATERIAL_GROUND)));
+    world.add(Box::new(Sphere::new(Vec3::new( 0.0,    0.0, -1.0),   0.5, &MATERIAL_CENTER)));
+    world.add(Box::new(Sphere::new(Vec3::new(-1.0,    0.0, -1.0),   0.5, &MATERIAL_LEFT)));
+    world.add(Box::new(Sphere::new(Vec3::new( 1.0,    0.0, -1.0),   0.5, &MATERIAL_RIGHT)));
 
     // Camera
     let viewport_height = 2.0;
@@ -84,12 +96,9 @@ fn ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
     let hit_record = world.hit(&ray, 0.001, f32::INFINITY);
 
     match hit_record {
-        Some(rec) => {
-            let target = rec.point + rec.normal + Vec3::random_unit_vector();
-
-            let ray = Ray::new(rec.point, target - rec.point);
-
-            return 0.5 * ray_color(ray, &world, depth - 1);
+        Some(rec) => match rec.material.scatter(&ray, &rec) {
+            Some(ScatterResult {scattered, attenuation}) => attenuation * ray_color(scattered, &world, depth-1),
+            None => Vec3::ZERO,
         },
         None => {
             let t = ray.direction.normalize().y + 1.0;
