@@ -2,3 +2,4 @@
 *.ppm
 *.png
 !/docs/*.ppm
+!/docs/*.png
