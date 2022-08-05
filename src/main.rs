@@ -1,5 +1,6 @@
 use glam::Vec3;
 use rand::Rng;
+use std::time::Instant;
 
 mod ray;
 mod hittable_list;
@@ -54,6 +55,8 @@ fn main() {
 
     let mut rng = rand::thread_rng();
 
+    let start = Instant::now();
+
     for j in (0..image_height).rev() {
         eprint!("\rScanlines remaining: {0}     ", j);
 
@@ -78,7 +81,11 @@ fn main() {
         }
     }
 
-    eprintln!("\nDone!");
+    let duration = start.elapsed();
+
+    eprintln!("\nRendering completed in {:?}", duration);
+
+    eprintln!("Done!");
 }
 
 fn ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
