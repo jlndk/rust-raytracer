@@ -12,13 +12,8 @@ mod material;
 use ray::Ray;
 use hittable_list::HittableList;
 use hittable::Hittable;
-use sphere::Sphere;
 use camera::Camera;
 use material::ScatterResult;
-use material::Lambertian;
-use material::Metal;
-use material::Dielectric;
-
 
 // STATIC COLORS
 const WHITE: Vec3 = Vec3::new(1.0, 1.0, 1.0);
@@ -28,34 +23,26 @@ const BLUE: Vec3 = Vec3::new(0.5, 0.7, 1.0);
 fn main() {
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 400;
+    // let image_width = 400;
+    let image_width = 600;
     // let image_width = 1920;
     let image_height = (image_width as f32 / aspect_ratio) as i32;
 
-    let samples_per_pixel = 50;
+    // let samples_per_pixel = 50;
+    let samples_per_pixel = 10;
     let max_depth = 12;
 
     // World
-    let mut world = HittableList::new();
-
-    const MATERIAL_GROUND: Lambertian = Lambertian::new(Vec3::new(0.8, 0.8, 0.0));
-    const MATERIAL_CENTER: Lambertian = Lambertian::new(Vec3::new(0.1, 0.2, 0.5));
-    const MATERIAL_LEFT: Dielectric   = Dielectric::new(1.5);
-    const MATERIAL_RIGHT: Metal = Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0);
-
-    world.add(Box::new(Sphere::new(Vec3::new( 0.0, -100.5, -1.0), 100.0, &MATERIAL_GROUND)));
-    world.add(Box::new(Sphere::new(Vec3::new( 0.0,    0.0, -1.0),   0.5, &MATERIAL_CENTER)));
-    world.add(Box::new(Sphere::new(Vec3::new(-1.0,    0.0, -1.0),   0.5, &MATERIAL_LEFT)));
-    world.add(Box::new(Sphere::new(Vec3::new( 1.0,    0.0, -1.0),   0.5, &MATERIAL_RIGHT)));
+    let world = HittableList::random_scene();
 
     // Camera
-    let lookfrom = Vec3::new(3.0, 3.0, 2.0);
-    let lookat = Vec3::new(0.0, 0.0, -1.0);
+    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
 
     let fov = 20.0;
-    let aperture = 2.0;
-    let dist_to_focus = (lookfrom-lookat).length();
+    let aperture = 0.1;
+    let dist_to_focus = 10.0;
 
     let camera = Camera::new(lookfrom, lookat, vup, fov, aspect_ratio, aperture, dist_to_focus);
 

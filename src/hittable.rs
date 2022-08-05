@@ -8,11 +8,11 @@ pub struct HitRecord<'a> {
     pub normal: Vec3,
     pub t: f32,
     pub front_face: bool,
-    pub material: &'a dyn Material,
+    pub material: &'a Box<dyn Material>,
 }
 
 impl <'a> HitRecord<'a> {
-    pub fn from_ray(ray: &Ray, point: Vec3, outward_normal: Vec3, t: f32, material: &'a (dyn Material + 'a)) -> Self {
+    pub fn from_ray(ray: &Ray, point: Vec3, outward_normal: Vec3, t: f32, material: &'a Box<dyn Material>) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
 
         let normal = if front_face { outward_normal } else { -outward_normal };
