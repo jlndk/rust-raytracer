@@ -3,7 +3,7 @@ use rand::{Rng, rngs::ThreadRng};
 use std::time::Instant;
 use rayon::prelude::*;
 use std::sync::Arc;
-use indicatif::{ParallelProgressIterator};
+use indicatif::{ParallelProgressIterator, ProgressStyle};
 
 mod ray;
 mod hittable_list;
@@ -63,8 +63,10 @@ fn main() {
     // Start timer to figure out how long the render took
     let start = Instant::now();
 
+    let progress_bar = ProgressStyle::default_bar().template("[{elapsed} ({eta} ETA)] {percent}% {wide_bar} ({pos}/{len} rows)").unwrap();
+
     // Render all pixels. Render each row in parallel
-    let pixels: Vec<Vec<Vec3>> = (0..IMAGE_HEIGHT).into_par_iter().rev().progress_count(IMAGE_HEIGHT as u64).map(|j| {
+    let pixels: Vec<Vec<Vec3>> = (0..IMAGE_HEIGHT).into_par_iter().rev().progress_with_style(progress_bar).map(|j| {
         // random number generator
         let mut rng = rand::thread_rng();
 
