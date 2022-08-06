@@ -1,12 +1,12 @@
 use glam::Vec3;
 use rand::Rng;
 
-use crate::hittable::Hittable;
 use crate::hittable::HitRecord;
-use crate::ray::Ray;
+use crate::hittable::Hittable;
+use crate::material::Dielectric;
 use crate::material::Lambertian;
 use crate::material::Metal;
-use crate::material::Dielectric;
+use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3::Vec3Extension;
 
@@ -48,15 +48,11 @@ impl HittableList {
         let mut rng = rand::thread_rng();
 
         const GROUND_MATERIAL: Lambertian = Lambertian::new(Vec3::new(0.5, 0.5, 0.5));
-        world.add(
-            Box::new(
-                Sphere::new(
-                    Vec3::new(0.0, -1000.0, 0.0),
-                    1000.0,
-                    Box::new(GROUND_MATERIAL)
-                )
-            )
-        );
+        world.add(Box::new(Sphere::new(
+            Vec3::new(0.0, -1000.0, 0.0),
+            1000.0,
+            Box::new(GROUND_MATERIAL),
+        )));
 
         let center_clear_dist = Vec3::new(4.0, 0.2, 0.0);
 
@@ -67,7 +63,6 @@ impl HittableList {
                 let z = (b as f32) + 0.9 * rng.gen_range(0.0..=1.0);
 
                 let center = Vec3::new(x, y, z);
-
 
                 if (center - center_clear_dist).length() > 0.9 {
                     let mut rng = rand::thread_rng();
@@ -92,20 +87,30 @@ impl HittableList {
                         let material = Dielectric::new(1.5);
                         world.add(Box::new(Sphere::new(center, 0.2, Box::new(material))));
                     }
-
                 }
-
             }
         }
 
         const MATERIAL1: Dielectric = Dielectric::new(1.5);
-        world.add(Box::new(Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0, Box::new(MATERIAL1))));
+        world.add(Box::new(Sphere::new(
+            Vec3::new(0.0, 1.0, 0.0),
+            1.0,
+            Box::new(MATERIAL1),
+        )));
 
         const MATERIAL2: Lambertian = Lambertian::new(Vec3::new(0.4, 0.2, 0.1));
-        world.add(Box::new(Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0, Box::new(MATERIAL2))));
+        world.add(Box::new(Sphere::new(
+            Vec3::new(-4.0, 1.0, 0.0),
+            1.0,
+            Box::new(MATERIAL2),
+        )));
 
         const MATERIAL3: Metal = Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0);
-        world.add(Box::new(Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0, Box::new(MATERIAL3))));
+        world.add(Box::new(Sphere::new(
+            Vec3::new(4.0, 1.0, 0.0),
+            1.0,
+            Box::new(MATERIAL3),
+        )));
 
         return world;
     }

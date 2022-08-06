@@ -1,8 +1,8 @@
 use glam::Vec3;
 use rand::Rng;
 
-use crate::ray::Ray;
 use crate::hittable::HitRecord;
+use crate::ray::Ray;
 use crate::vec3::Vec3Extension;
 
 pub struct ScatterResult {
@@ -62,7 +62,10 @@ impl Material for Metal {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<ScatterResult> {
         let reflected = ray_in.direction.normalize().reflect_in(hit_record.normal);
 
-        let scattered = Ray::new(hit_record.point, reflected + self.fuzz * Vec3::random_in_unit_sphere());
+        let scattered = Ray::new(
+            hit_record.point,
+            reflected + self.fuzz * Vec3::random_in_unit_sphere(),
+        );
 
         if scattered.direction.dot(hit_record.normal) <= 0.0 {
             return None;
@@ -83,7 +86,9 @@ pub struct Dielectric {
 
 impl Dielectric {
     pub const fn new(index_of_refraction: f32) -> Self {
-        return Self { index_of_refraction };
+        return Self {
+            index_of_refraction,
+        };
     }
 
     fn reflectance(cosine: f32, ref_idx: f32) -> f32 {
@@ -101,7 +106,7 @@ impl Material for Dielectric {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
         let refraction_ratio = match hit_record.front_face {
-            true => (1.0/self.index_of_refraction),
+            true => (1.0 / self.index_of_refraction),
             false => self.index_of_refraction,
         };
 
@@ -109,9 +114,11 @@ impl Material for Dielectric {
 
         let mut rng = rand::thread_rng();
 
-        let direction = match can_refract || Dielectric::reflectance(cos_theta, refraction_ratio) > rng.gen_range(0.0..1.0) {
+        let direction = match can_refract
+            || Dielectric::reflectance(cos_theta, refraction_ratio) > rng.gen_range(0.0..1.0)
+        {
             true => unit_direction.refract_off(hit_record.normal, refraction_ratio),
-            false => unit_direction.reflect_in(hit_record.normal)
+            false => unit_direction.reflect_in(hit_record.normal),
         };
 
         let result = ScatterResult {

@@ -1,8 +1,8 @@
-use glam::Vec3;
-use crate::hittable::Hittable;
 use crate::hittable::HitRecord;
+use crate::hittable::Hittable;
 use crate::material::Material;
 use crate::ray::Ray;
+use glam::Vec3;
 
 pub struct Sphere {
     center: Vec3,
@@ -18,7 +18,7 @@ impl Hittable for Sphere {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared() as f32;
         let half_b = oc.dot(ray.direction);
-        let c = oc.length_squared() as f32 - self.radius*self.radius;
+        let c = oc.length_squared() as f32 - self.radius * self.radius;
 
         let discriminant = half_b * half_b - a * c;
         if discriminant < 0.0 {
@@ -48,6 +48,10 @@ impl Hittable for Sphere {
 
 impl Sphere {
     pub fn new(center: Vec3, radius: f32, material: Box<dyn Material>) -> Self {
-        return Self { center, radius, material };
+        return Self {
+            center,
+            radius,
+            material,
+        };
     }
 }

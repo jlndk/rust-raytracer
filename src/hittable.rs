@@ -1,7 +1,7 @@
 use glam::Vec3;
 
-use crate::ray::Ray;
 use crate::material::Material;
+use crate::ray::Ray;
 
 pub struct HitRecord<'a> {
     pub point: Vec3,
@@ -11,13 +11,29 @@ pub struct HitRecord<'a> {
     pub material: &'a Box<dyn Material>,
 }
 
-impl <'a> HitRecord<'a> {
-    pub fn from_ray(ray: &Ray, point: Vec3, outward_normal: Vec3, t: f32, material: &'a Box<dyn Material>) -> Self {
+impl<'a> HitRecord<'a> {
+    pub fn from_ray(
+        ray: &Ray,
+        point: Vec3,
+        outward_normal: Vec3,
+        t: f32,
+        material: &'a Box<dyn Material>,
+    ) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
 
-        let normal = if front_face { outward_normal } else { -outward_normal };
+        let normal = if front_face {
+            outward_normal
+        } else {
+            -outward_normal
+        };
 
-        return Self { point, normal, t, front_face, material };
+        return Self {
+            point,
+            normal,
+            t,
+            front_face,
+            material,
+        };
     }
 }
 
