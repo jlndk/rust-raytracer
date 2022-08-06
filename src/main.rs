@@ -55,6 +55,9 @@ const DIST_TO_FOCUS: f32  = 10.0;
 const COLOR_SCALE: f32 = 1.0 / SAMPLES_PER_PIXEL as f32;
 
 fn main() {
+    // First of all, print the relavant rendering constants to the user
+    print_rendering_info();
+
     // Generate the scene (placing random spheres on a plane).
     // Put it in an ARC to share it across threads
     let shared_world = Arc::new(HittableList::random_scene());
@@ -65,8 +68,31 @@ fn main() {
     // Start timer to figure out how long the render took
     let start = Instant::now();
 
+    // Define styling for the rendering progress bar
     let progress_bar = ProgressStyle::default_bar().template("[{elapsed} ({eta} ETA)] {percent}% {wide_bar} ({pos}/{len} rows)").unwrap();
 
+    // Render all pixels. Render each row in parallel
+    let pixels: Vec<Vec<Vec3>> = (0..IMAGE_HEIGHT).into_par_iter().rev().progress_with_style(progress_bar).map(|j| {
+        // random number generator
+        let mut rng = rand::thread_rng();
+
+        // Grap thread-safe reference to the world
+        let world = Arc::clone(&shared_world);
+
+        return (0..IMAGE_WIDTH).map(|i| compute_pixel_color(i, j, &camera, &world, &mut rng)).collect();
+    }).collect();
+
+    // Figure out and report how long the render took
+    let duration = start.elapsed();
+    eprintln!("\nRendering completed in {:?}", duration);
+
+    // Write pixels to stdout
+    write_image(pixels);
+
+    eprintln!("Done!");
+}
+
+fn print_rendering_info() {
     let table = TableBuilder::new().style(TableStyle::extended()).rows(
         vec![
             Row::new(vec![
@@ -88,26 +114,6 @@ fn main() {
     ).build();
 
     eprintln!("{}", table.render());
-
-    // Render all pixels. Render each row in parallel
-    let pixels: Vec<Vec<Vec3>> = (0..IMAGE_HEIGHT).into_par_iter().rev().progress_with_style(progress_bar).map(|j| {
-        // random number generator
-        let mut rng = rand::thread_rng();
-
-        // Grap thread-safe reference to the world
-        let world = Arc::clone(&shared_world);
-
-        return (0..IMAGE_WIDTH).map(|i| compute_pixel_color(i, j, &camera, &world, &mut rng)).collect();
-    }).collect();
-
-    // Figure out and report how long the render took
-    let duration = start.elapsed();
-    eprintln!("\nRendering completed in {:?}", duration);
-
-    // Write pixels to stdout
-    write_image(pixels);
-
-    eprintln!("Done!");
 }
 
 /**
