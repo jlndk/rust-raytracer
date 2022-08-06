@@ -1,6 +1,9 @@
 use glam::Vec3;
 use rand::{Rng, rngs::ThreadRng};
 use std::time::Instant;
+use rayon::prelude::*;
+use std::sync::Arc;
+use indicatif::{ParallelProgressIterator};
 
 mod ray;
 mod hittable_list;
@@ -27,12 +30,12 @@ const ASPECT_RATIO: f32 = 16.0 / 9.0;
 const IMAGE_WIDTH: i32 = 1920;
 const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as i32;
 
-const SAMPLES_PER_PIXEL: i32 = 5;
+// const SAMPLES_PER_PIXEL: i32 = 5;
 // const SAMPLES_PER_PIXEL: i32 = 10;
-// const SAMPLES_PER_PIXEL: i32 = 50;
-const MAX_DEPTH: i32 = 6;
+const SAMPLES_PER_PIXEL: i32 = 50;
+// const MAX_DEPTH: i32 = 6;
 // const MAX_DEPTH: i32 = 12;
-// const MAX_DEPTH: i32 = 50;
+const MAX_DEPTH: i32 = 50;
 
 // Camera
 const LOOKFROM: Vec3  = Vec3::new(13.0, 2.0, 3.0);
@@ -43,33 +46,33 @@ const FOV: f32  = 20.0;
 const APERTURE: f32  = 0.1;
 const DIST_TO_FOCUS: f32  = 10.0;
 
+/**
+ * COMPUTED CONSTANTS
+ */
+// The average color of multiple sampels per pixels is computed, so this factor decides what to divide the cumulative sum of all the samples with
+const COLOR_SCALE: f32 = 1.0 / SAMPLES_PER_PIXEL as f32;
+
 fn main() {
-    // Generate the scene (placing random spheres on a plane)
-    let world = HittableList::random_scene();
+    // Generate the scene (placing random spheres on a plane).
+    // Put it in an ARC to share it across threads
+    let shared_world = Arc::new(HittableList::random_scene());
 
     // Define the Camera
     let camera = Camera::new(LOOKFROM, LOOKAT, VUP, FOV, ASPECT_RATIO, APERTURE, DIST_TO_FOCUS);
 
-    // 2d array which cantains all the final pixel colors
-    let mut pixels = vec![vec![Vec3::ZERO; IMAGE_WIDTH as usize]; IMAGE_HEIGHT as usize];
-
-    // random number generator
-    let mut rng = rand::thread_rng();
-
-    // The average color of multiple sampels per pixels is computed, so this factor decides what to divide the cumulative sum of all the samples with
-    let color_scale = 1.0 / SAMPLES_PER_PIXEL as f32;
-
     // Start timer to figure out how long the render took
     let start = Instant::now();
 
-    // Iterate over all pixels and compute it's color
-    for j in (0..IMAGE_HEIGHT).rev() {
-        eprint!("\rScanlines remaining: {0}     ", j);
+    // Render all pixels. Render each row in parallel
+    let pixels: Vec<Vec<Vec3>> = (0..IMAGE_HEIGHT).into_par_iter().rev().progress_count(IMAGE_HEIGHT as u64).map(|j| {
+        // random number generator
+        let mut rng = rand::thread_rng();
 
-        for i in 0..IMAGE_WIDTH {
-            pixels[j as usize][i as usize] = compute_pixel_color(i, j, color_scale, &camera, &world, &mut rng);
-        }
-    }
+        // Grap thread-safe reference to the world
+        let world = Arc::clone(&shared_world);
+
+        return (0..IMAGE_WIDTH).map(|i| compute_pixel_color(i, j, &camera, &world, &mut rng)).collect();
+    }).collect();
 
     // Figure out and report how long the render took
     let duration = start.elapsed();
@@ -81,7 +84,10 @@ fn main() {
     eprintln!("Done!");
 }
 
-fn compute_pixel_color(y: i32, x: i32, color_scale: f32, camera: &Camera, world: &HittableList, rng: &mut ThreadRng) -> Vec3 {
+/**
+ * Computes the color of a given pixel at coordinate (x, y)
+ */
+fn compute_pixel_color(y: i32, x: i32, camera: &Camera, world: &HittableList, rng: &mut ThreadRng) -> Vec3 {
     let mut pixel_color = Vec3::ZERO;
 
     for _s in 0..SAMPLES_PER_PIXEL {
@@ -93,9 +99,9 @@ fn compute_pixel_color(y: i32, x: i32, color_scale: f32, camera: &Camera, world:
     }
 
     return Vec3::new(
-        (pixel_color.x * color_scale).sqrt(),
-        (pixel_color.y * color_scale).sqrt(),
-        (pixel_color.z * color_scale).sqrt(),
+        (pixel_color.x * COLOR_SCALE).sqrt(),
+        (pixel_color.y * COLOR_SCALE).sqrt(),
+        (pixel_color.z * COLOR_SCALE).sqrt(),
     );
 }
 
@@ -109,7 +115,7 @@ fn compute_ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
 
     match hit_record {
         Some(rec) => match rec.material.scatter(&ray, &rec) {
-            Some(ScatterResult {scattered, attenuation}) => attenuation * compute_ray_color(scattered, &world, depth-1),
+            Some(ScatterResult { scattered, attenuation }) => attenuation * compute_ray_color(scattered, &world, depth-1),
             None => Vec3::ZERO,
         },
         None => {
@@ -124,7 +130,7 @@ fn write_image(pixels: Vec<Vec<Vec3>>) {
     println!("{0} {1}", IMAGE_WIDTH, IMAGE_HEIGHT);
     println!("{0}", 255);
 
-    for row in pixels.into_iter().rev() {
+    for row in pixels {
         for color in row {
             let ir = (255.999 * color.x) as i32;
             let ig = (255.999 * color.y) as i32;

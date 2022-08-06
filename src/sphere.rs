@@ -10,6 +10,9 @@ pub struct Sphere {
     pub material: Box<dyn Material>,
 }
 
+unsafe impl Send for Sphere {}
+unsafe impl Sync for Sphere {}
+
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         let oc = ray.origin - self.center;
