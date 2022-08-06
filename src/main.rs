@@ -1,5 +1,5 @@
 use glam::Vec3;
-use rand::Rng;
+use rand::{Rng, rngs::ThreadRng};
 use std::time::Instant;
 
 mod ray;
@@ -16,80 +16,90 @@ use hittable::Hittable;
 use camera::Camera;
 use material::ScatterResult;
 
-// STATIC COLORS
+// Static colors
 const WHITE: Vec3 = Vec3::new(1.0, 1.0, 1.0);
 const BLUE: Vec3 = Vec3::new(0.5, 0.7, 1.0);
 
+// Image
+const ASPECT_RATIO: f32 = 16.0 / 9.0;
+// const IMAGE_WIDTH: i32 = 400;
+// const IMAGE_WIDTH: i32 = 600;
+const IMAGE_WIDTH: i32 = 1920;
+const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as i32;
+
+const SAMPLES_PER_PIXEL: i32 = 5;
+// const SAMPLES_PER_PIXEL: i32 = 10;
+// const SAMPLES_PER_PIXEL: i32 = 50;
+const MAX_DEPTH: i32 = 6;
+// const MAX_DEPTH: i32 = 12;
+// const MAX_DEPTH: i32 = 50;
+
+// Camera
+const LOOKFROM: Vec3  = Vec3::new(13.0, 2.0, 3.0);
+const LOOKAT: Vec3  = Vec3::new(0.0, 0.0, 0.0);
+const VUP: Vec3  = Vec3::new(0.0, 1.0, 0.0);
+
+const FOV: f32  = 20.0;
+const APERTURE: f32  = 0.1;
+const DIST_TO_FOCUS: f32  = 10.0;
 
 fn main() {
-    // Image
-    let aspect_ratio = 16.0 / 9.0;
-    // let image_width = 400;
-    // let image_width = 600;
-    let image_width = 1920;
-    let image_height = (image_width as f32 / aspect_ratio) as i32;
-
-    let samples_per_pixel = 50;
-    // let samples_per_pixel = 10;
-    // let max_depth = 12;
-    let max_depth = 50;
-
-    // World
+    // Generate the scene (placing random spheres on a plane)
     let world = HittableList::random_scene();
 
-    // Camera
-    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
-    let lookat = Vec3::new(0.0, 0.0, 0.0);
-    let vup = Vec3::new(0.0, 1.0, 0.0);
+    // Define the Camera
+    let camera = Camera::new(LOOKFROM, LOOKAT, VUP, FOV, ASPECT_RATIO, APERTURE, DIST_TO_FOCUS);
 
-    let fov = 20.0;
-    let aperture = 0.1;
-    let dist_to_focus = 10.0;
+    // 2d array which cantains all the final pixel colors
+    let mut pixels = vec![vec![Vec3::ZERO; IMAGE_WIDTH as usize]; IMAGE_HEIGHT as usize];
 
-    let camera = Camera::new(lookfrom, lookat, vup, fov, aspect_ratio, aperture, dist_to_focus);
-
-    println!("P3");
-    println!("{0} {1}", image_width, image_height);
-    println!("{0}", 255);
-
-    let color_scale = 1.0 / samples_per_pixel as f32;
-
+    // random number generator
     let mut rng = rand::thread_rng();
 
+    // The average color of multiple sampels per pixels is computed, so this factor decides what to divide the cumulative sum of all the samples with
+    let color_scale = 1.0 / SAMPLES_PER_PIXEL as f32;
+
+    // Start timer to figure out how long the render took
     let start = Instant::now();
 
-    for j in (0..image_height).rev() {
+    // Iterate over all pixels and compute it's color
+    for j in (0..IMAGE_HEIGHT).rev() {
         eprint!("\rScanlines remaining: {0}     ", j);
 
-        for i in 0..image_width {
-            let mut pixel_color = Vec3::ZERO;
-
-            // TODO: Optimize this loop for SIMD
-            for _s in 0..samples_per_pixel {
-                let u = ((i as f32) + rng.gen_range(0.0..1.0)) / (image_width - 1) as f32;
-                let v = ((j as f32) + rng.gen_range(0.0..1.0)) / (image_height - 1) as f32;
-
-                let ray = camera.get_ray(u, v);
-                pixel_color += ray_color(ray, &world, max_depth);
-            }
-
-            let scaled_color = Vec3::new(
-                (pixel_color.x * color_scale).sqrt(),
-                (pixel_color.y * color_scale).sqrt(),
-                (pixel_color.z * color_scale).sqrt(),
-            );
-            write_color(scaled_color);
+        for i in 0..IMAGE_WIDTH {
+            pixels[j as usize][i as usize] = compute_pixel_color(i, j, color_scale, &camera, &world, &mut rng);
         }
     }
 
+    // Figure out and report how long the render took
     let duration = start.elapsed();
-
     eprintln!("\nRendering completed in {:?}", duration);
+
+    // Write pixels to stdout
+    write_image(pixels);
 
     eprintln!("Done!");
 }
 
-fn ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
+fn compute_pixel_color(y: i32, x: i32, color_scale: f32, camera: &Camera, world: &HittableList, rng: &mut ThreadRng) -> Vec3 {
+    let mut pixel_color = Vec3::ZERO;
+
+    for _s in 0..SAMPLES_PER_PIXEL {
+        let u = ((y as f32) + rng.gen_range(0.0..1.0)) / (IMAGE_WIDTH - 1) as f32;
+        let v = ((x as f32) + rng.gen_range(0.0..1.0)) / (IMAGE_HEIGHT - 1) as f32;
+
+        let ray = camera.get_ray(u, v);
+        pixel_color += compute_ray_color(ray, &world, MAX_DEPTH);
+    }
+
+    return Vec3::new(
+        (pixel_color.x * color_scale).sqrt(),
+        (pixel_color.y * color_scale).sqrt(),
+        (pixel_color.z * color_scale).sqrt(),
+    );
+}
+
+fn compute_ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
     // If we've exceeded the ray bounce limit, no more light is gathered.
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
@@ -99,7 +109,7 @@ fn ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
 
     match hit_record {
         Some(rec) => match rec.material.scatter(&ray, &rec) {
-            Some(ScatterResult {scattered, attenuation}) => attenuation * ray_color(scattered, &world, depth-1),
+            Some(ScatterResult {scattered, attenuation}) => attenuation * compute_ray_color(scattered, &world, depth-1),
             None => Vec3::ZERO,
         },
         None => {
@@ -109,10 +119,18 @@ fn ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
     }
 }
 
-fn write_color(color: Vec3) {
-    let ir = (255.999 * color.x) as i32;
-    let ig = (255.999 * color.y) as i32;
-    let ib = (255.999 * color.z) as i32;
+fn write_image(pixels: Vec<Vec<Vec3>>) {
+    println!("P3");
+    println!("{0} {1}", IMAGE_WIDTH, IMAGE_HEIGHT);
+    println!("{0}", 255);
 
-    println!("{} {} {}", ir, ig, ib);
+    for row in pixels.into_iter().rev() {
+        for color in row {
+            let ir = (255.999 * color.x) as i32;
+            let ig = (255.999 * color.y) as i32;
+            let ib = (255.999 * color.z) as i32;
+
+            println!("{} {} {}", ir, ig, ib);
+        }
+    }
 }
