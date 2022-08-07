@@ -14,6 +14,7 @@ mod hittable_list;
 mod material;
 mod ray;
 mod sphere;
+mod texture;
 mod vec3;
 
 use camera::Camera;
@@ -28,18 +29,19 @@ const BLUE: Vec3 = Vec3::new(0.5, 0.7, 1.0);
 
 // Image
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
-// const IMAGE_WIDTH: i32 = 400;
+const IMAGE_WIDTH: i32 = 400;
 // const IMAGE_WIDTH: i32 = 600;
-const IMAGE_WIDTH: i32 = 1920;
+// const IMAGE_WIDTH: i32 = 1920;
 const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as i32;
 
-// const SAMPLES_PER_PIXEL: i32 = 5;
+const SAMPLES_PER_PIXEL: i32 = 5;
 // const SAMPLES_PER_PIXEL: i32 = 10;
 // const SAMPLES_PER_PIXEL: i32 = 50;
-const SAMPLES_PER_PIXEL: i32 = 100;
+// const SAMPLES_PER_PIXEL: i32 = 100;
+const MAX_DEPTH: i32 = 3;
 // const MAX_DEPTH: i32 = 6;
 // const MAX_DEPTH: i32 = 12;
-const MAX_DEPTH: i32 = 50;
+// const MAX_DEPTH: i32 = 50;
 
 // Camera
 const LOOKFROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
