@@ -8,6 +8,7 @@ use term_table::{
     row::Row, table_cell::Alignment, table_cell::TableCell, TableBuilder, TableStyle,
 };
 
+mod bvh;
 mod camera;
 mod hittable;
 mod hittable_list;

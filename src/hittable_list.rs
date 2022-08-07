@@ -1,6 +1,7 @@
 use glam::Vec3;
 use rand::Rng;
 
+use crate::bvh::AxisAlignedBoundingBox;
 use crate::hittable::HitRecord;
 use crate::hittable::Hittable;
 use crate::material::Dielectric;
@@ -11,7 +12,7 @@ use crate::sphere::Sphere;
 use crate::vec3::Vec3Extension;
 
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable + Send + Sync>>,
+    pub objects: Vec<Box<dyn Hittable + Send + Sync>>,
 }
 
 impl Hittable for HittableList {
@@ -28,6 +29,25 @@ impl Hittable for HittableList {
         }
 
         return temp_rec;
+    }
+
+    fn get_bounding_box(&self) -> Option<AxisAlignedBoundingBox> {
+        if self.objects.is_empty() {
+            return None;
+        }
+
+        return (&self.objects).into_iter().fold(None, |b, object| {
+            match object.get_bounding_box() {
+                Some(object_box) => match b {
+                    None => Some(object_box),
+                    Some(existing_box) => Some(AxisAlignedBoundingBox::surrounding(
+                        existing_box,
+                        object_box,
+                    )),
+                },
+                None => None,
+            }
+        });
     }
 }
 

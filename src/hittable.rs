@@ -1,5 +1,6 @@
 use glam::Vec3;
 
+use crate::bvh::AxisAlignedBoundingBox;
 use crate::material::Material;
 use crate::ray::Ray;
 
@@ -39,4 +40,5 @@ impl<'a> HitRecord<'a> {
 
 pub trait Hittable: Send + Sync {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
+    fn get_bounding_box(&self) -> Option<AxisAlignedBoundingBox>;
 }

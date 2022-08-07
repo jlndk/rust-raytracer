@@ -1,3 +1,4 @@
+use crate::bvh::AxisAlignedBoundingBox;
 use crate::hittable::HitRecord;
 use crate::hittable::Hittable;
 use crate::material::Material;
@@ -43,6 +44,13 @@ impl Hittable for Sphere {
         let hit_record = HitRecord::from_ray(ray, hit_point, outward_normal, root, &self.material);
 
         return Some(hit_record);
+    }
+
+    fn get_bounding_box(&self) -> Option<AxisAlignedBoundingBox> {
+        let radius_vec = Vec3::new(self.radius, self.radius, self.radius);
+        let min = self.center - radius_vec;
+        let max = self.center + radius_vec;
+        return Some(AxisAlignedBoundingBox::new(min, max));
     }
 }
 
