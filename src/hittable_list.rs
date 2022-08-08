@@ -9,6 +9,8 @@ use crate::material::Lambertian;
 use crate::material::Metal;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
+use crate::texture::CheckerTexture;
+use crate::texture::SolidColor;
 use crate::vec3::Vec3Extension;
 
 pub struct HittableList {
@@ -67,11 +69,16 @@ impl HittableList {
 
         let mut rng = rand::thread_rng();
 
-        const GROUND_MATERIAL: Lambertian = Lambertian::new(Vec3::new(0.5, 0.5, 0.5));
+        let checker_texture = CheckerTexture::new(
+            Box::new(SolidColor::new(Vec3::new(0.2, 0.3, 0.1))),
+            Box::new(SolidColor::new(Vec3::new(0.9, 0.9, 0.9))),
+        );
+        let ground_material = Lambertian::new(Box::new(checker_texture));
+
         world.add(Box::new(Sphere::new(
             Vec3::new(0.0, -1000.0, 0.0),
             1000.0,
-            Box::new(GROUND_MATERIAL),
+            Box::new(ground_material),
         )));
 
         let center_clear_dist = Vec3::new(4.0, 0.2, 0.0);
@@ -92,7 +99,7 @@ impl HittableList {
                     // diffuse
                     if probability < 0.8 {
                         let albedo = Vec3::rand() * Vec3::rand();
-                        let material = Lambertian::new(albedo);
+                        let material = Lambertian::new(Box::new(SolidColor::new(albedo)));
                         world.add(Box::new(Sphere::new(center, 0.2, Box::new(material))));
                     }
                     // metal
@@ -111,25 +118,26 @@ impl HittableList {
             }
         }
 
-        const MATERIAL1: Dielectric = Dielectric::new(1.5);
+        let material_1 = Dielectric::new(1.5);
         world.add(Box::new(Sphere::new(
             Vec3::new(0.0, 1.0, 0.0),
             1.0,
-            Box::new(MATERIAL1),
+            Box::new(material_1),
         )));
 
-        const MATERIAL2: Lambertian = Lambertian::new(Vec3::new(0.4, 0.2, 0.1));
+        let material_2 = Lambertian::new(Box::new(SolidColor::new(Vec3::new(0.4, 0.2, 0.1))));
+
         world.add(Box::new(Sphere::new(
             Vec3::new(-4.0, 1.0, 0.0),
             1.0,
-            Box::new(MATERIAL2),
+            Box::new(material_2),
         )));
 
-        const MATERIAL3: Metal = Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0);
+        let material_3 = Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0);
         world.add(Box::new(Sphere::new(
             Vec3::new(4.0, 1.0, 0.0),
             1.0,
-            Box::new(MATERIAL3),
+            Box::new(material_3),
         )));
 
         return world;

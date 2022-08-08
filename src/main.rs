@@ -15,6 +15,7 @@ mod hittable_list;
 mod material;
 mod ray;
 mod sphere;
+mod texture;
 mod vec3;
 
 use camera::Camera;
@@ -38,6 +39,8 @@ const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as i32;
 // const SAMPLES_PER_PIXEL: i32 = 10;
 // const SAMPLES_PER_PIXEL: i32 = 50;
 const SAMPLES_PER_PIXEL: i32 = 100;
+
+// const MAX_DEPTH: i32 = 3;
 // const MAX_DEPTH: i32 = 6;
 // const MAX_DEPTH: i32 = 12;
 const MAX_DEPTH: i32 = 50;

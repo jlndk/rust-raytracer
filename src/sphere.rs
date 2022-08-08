@@ -1,4 +1,7 @@
 use crate::bvh::AxisAlignedBoundingBox;
+use std::f32::consts::PI;
+use std::f32::consts::TAU;
+
 use crate::hittable::HitRecord;
 use crate::hittable::Hittable;
 use crate::material::Material;
@@ -41,7 +44,10 @@ impl Hittable for Sphere {
         let hit_point = ray.at(root);
         let outward_normal = (hit_point - self.center) / self.radius;
 
-        let hit_record = HitRecord::from_ray(ray, hit_point, outward_normal, root, &self.material);
+        let (u, v) = Sphere::get_uv(outward_normal);
+
+        let hit_record =
+            HitRecord::from_ray(ray, hit_point, outward_normal, root, u, v, &self.material);
 
         return Some(hit_record);
     }
@@ -61,5 +67,14 @@ impl Sphere {
             radius,
             material,
         };
+    }
+
+    fn get_uv(point: Vec3) -> (f32, f32) {
+        let theta = (-point.y).acos();
+        let phi = (-point.z).atan2(point.x) + PI;
+
+        let u = phi / (TAU);
+        let v = theta / PI;
+        return (u, v);
     }
 }

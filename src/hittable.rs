@@ -8,6 +8,8 @@ pub struct HitRecord<'a> {
     pub point: Vec3,
     pub normal: Vec3,
     pub t: f32,
+    pub u: f32,
+    pub v: f32,
     pub front_face: bool,
     pub material: &'a Box<dyn Material>,
 }
@@ -18,6 +20,8 @@ impl<'a> HitRecord<'a> {
         point: Vec3,
         outward_normal: Vec3,
         t: f32,
+        u: f32,
+        v: f32,
         material: &'a Box<dyn Material>,
     ) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
@@ -32,6 +36,8 @@ impl<'a> HitRecord<'a> {
             point,
             normal,
             t,
+            u,
+            v,
             front_face,
             material,
         };
