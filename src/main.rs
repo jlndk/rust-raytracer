@@ -37,7 +37,8 @@ const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as i32;
 // const SAMPLES_PER_PIXEL: i32 = 5;
 // const SAMPLES_PER_PIXEL: i32 = 10;
 // const SAMPLES_PER_PIXEL: i32 = 50;
-const SAMPLES_PER_PIXEL: i32 = 100;
+// const SAMPLES_PER_PIXEL: i32 = 100;
+const SAMPLES_PER_PIXEL: i32 = 200;
 
 // const MAX_DEPTH: i32 = 3;
 // const MAX_DEPTH: i32 = 6;
@@ -185,7 +186,7 @@ fn compute_ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
             None => Vec3::ZERO,
         },
         None => {
-            let t = ray.direction.normalize().y + 1.0;
+            let t = 0.5 * (ray.direction.normalize().y + 1.0);
             return WHITE.lerp(BLUE, t);
         }
     }
