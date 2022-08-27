@@ -133,7 +133,7 @@ pub fn random_spheres() -> Scene {
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, 11.0, 0.0),
         1.0,
-        Box::new(Metal::new(Vec3::new(1.0, 1.0, 1.0), 0.5)),
+        Box::new(Metal::new(Vec3::new(1.0, 1.0, 1.0), 0.35)),
     )));
 
     world.add(Box::new(Sphere::new(
@@ -160,7 +160,7 @@ pub fn random_spheres() -> Scene {
 
     let mut rng = rand::thread_rng();
 
-    for i in 0..1500 {
+    for _i in 0..1500 {
         let u = rng.gen_range(0.0..=1.0f32);
         let v = rng.gen_range(0.0..=1.0f32);
         let theta = (TAU * u).abs();
@@ -205,7 +205,7 @@ pub fn random_spheres() -> Scene {
     let vup = Vec3::new(0.0, 1.0, 0.0);
 
     let fov = 20.0;
-    let aperture = 0.01;
+    let aperture = 0.25;
     let dist_to_focus = (lookfrom - lookat).length();
 
     // Define the Camera

@@ -59,6 +59,7 @@ fn main() {
     print_rendering_info();
 
     let selected_scene = scene::random_spheres();
+    // let selected_scene = scene::random_scene();
 
     // Put scene in an ARC to share it across threads
     let shared_world = Arc::new(selected_scene.world);
