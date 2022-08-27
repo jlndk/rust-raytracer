@@ -24,10 +24,6 @@ use hittable_list::HittableList;
 use material::ScatterResult;
 use ray::Ray;
 
-// Static colors
-const WHITE: Vec3 = Vec3::new(1.0, 1.0, 1.0);
-const BLUE: Vec3 = Vec3::new(0.5, 0.7, 1.0);
-
 // Image
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
 // const IMAGE_WIDTH: i32 = 400;
@@ -41,12 +37,14 @@ const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as i32;
 // const SAMPLES_PER_PIXEL: i32 = 10;
 // const SAMPLES_PER_PIXEL: i32 = 50;
 // const SAMPLES_PER_PIXEL: i32 = 100;
-const SAMPLES_PER_PIXEL: i32 = 200;
+// const SAMPLES_PER_PIXEL: i32 = 200;
+const SAMPLES_PER_PIXEL: i32 = 2000;
 
 // const MAX_DEPTH: i32 = 3;
 // const MAX_DEPTH: i32 = 6;
 // const MAX_DEPTH: i32 = 12;
-const MAX_DEPTH: i32 = 50;
+// const MAX_DEPTH: i32 = 50;
+const MAX_DEPTH: i32 = 200;
 
 /**
  * COMPUTED CONSTANTS
@@ -58,11 +56,14 @@ fn main() {
     // First of all, print the relavant rendering constants to the user
     print_rendering_info();
 
-    let selected_scene = scene::random_spheres();
+    // let selected_scene = scene::random_spheres();
     // let selected_scene = scene::random_scene();
+    let selected_scene = scene::glowing_sphere();
 
     // Put scene in an ARC to share it across threads
     let shared_world = Arc::new(selected_scene.world);
+
+    let background = selected_scene.background;
 
     let camera = selected_scene.camera;
 
@@ -87,7 +88,7 @@ fn main() {
             let world = Arc::clone(&shared_world);
 
             return (0..IMAGE_WIDTH)
-                .map(|i| compute_pixel_color(i, j, &camera, &world, &mut rng))
+                .map(|i| compute_pixel_color(i, j, background, &camera, &world, &mut rng))
                 .collect();
         })
         .collect();
@@ -135,6 +136,7 @@ fn print_rendering_info() {
 fn compute_pixel_color(
     y: i32,
     x: i32,
+    background: Vec3,
     camera: &Camera,
     world: &HittableList,
     rng: &mut ThreadRng,
@@ -146,7 +148,7 @@ fn compute_pixel_color(
         let v = ((x as f32) + rng.gen_range(0.0..1.0)) / (IMAGE_HEIGHT - 1) as f32;
 
         let ray = camera.get_ray(u, v);
-        pixel_color += compute_ray_color(ray, &world, MAX_DEPTH);
+        pixel_color += compute_ray_color(ray, background, &world, MAX_DEPTH);
     }
 
     return Vec3::new(
@@ -156,7 +158,7 @@ fn compute_pixel_color(
     );
 }
 
-fn compute_ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
+fn compute_ray_color(ray: Ray, background: Vec3, world: &HittableList, depth: i32) -> Vec3 {
     // If we've exceeded the ray bounce limit, no more light is gathered.
     if depth <= 0 {
         return Vec3::new(0.0, 0.0, 0.0);
@@ -165,17 +167,20 @@ fn compute_ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
     let hit_record = world.hit(&ray, 0.001, f32::INFINITY);
 
     match hit_record {
-        Some(rec) => match rec.material.scatter(&ray, &rec) {
-            Some(ScatterResult {
-                scattered,
-                attenuation,
-            }) => attenuation * compute_ray_color(scattered, &world, depth - 1),
-            None => Vec3::ZERO,
-        },
-        None => {
-            let t = 0.5 * (ray.direction.normalize().y + 1.0);
-            return WHITE.lerp(BLUE, t);
+        Some(rec) => {
+            let emitted = rec.material.emitted(rec.u, rec.v, rec.point);
+            match rec.material.scatter(&ray, &rec) {
+                Some(ScatterResult {
+                    scattered,
+                    attenuation,
+                }) => {
+                    emitted
+                        + attenuation * compute_ray_color(scattered, background, &world, depth - 1)
+                }
+                None => emitted,
+            }
         }
+        None => background,
     }
 }
 

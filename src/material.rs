@@ -3,7 +3,7 @@ use rand::Rng;
 
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
-use crate::texture::Texture;
+use crate::texture::{SolidColor, Texture};
 use crate::vec3::Vec3Extension;
 
 pub struct ScatterResult {
@@ -13,6 +13,10 @@ pub struct ScatterResult {
 
 pub trait Material {
     fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<ScatterResult>;
+
+    fn emitted(&self, _u: f32, _v: f32, _point: Vec3) -> Vec3 {
+        return Vec3::ZERO; // Black
+    }
 }
 
 pub struct Lambertian {
@@ -130,5 +134,29 @@ impl Material for Dielectric {
         };
 
         return Some(result);
+    }
+}
+
+pub struct DiffuseLight {
+    texture: Box<dyn Texture>,
+}
+
+impl DiffuseLight {
+    pub fn new(texture: Box<dyn Texture>) -> Self {
+        return Self { texture: texture };
+    }
+
+    pub fn from_color(color: Vec3) -> Self {
+        return DiffuseLight::new(Box::new(SolidColor::new(color)));
+    }
+}
+
+impl Material for DiffuseLight {
+    fn scatter(&self, ray_in: &Ray, hit_record: &HitRecord) -> Option<ScatterResult> {
+        return None;
+    }
+
+    fn emitted(&self, u: f32, v: f32, point: Vec3) -> Vec3 {
+        return self.texture.value(u, v, &point);
     }
 }

@@ -6,6 +6,7 @@ use rand::Rng;
 use crate::camera::Camera;
 use crate::hittable_list::HittableList;
 use crate::material::Dielectric;
+use crate::material::DiffuseLight;
 use crate::material::Lambertian;
 use crate::material::Metal;
 use crate::sphere::Sphere;
@@ -17,6 +18,7 @@ use crate::ASPECT_RATIO;
 pub struct Scene {
     pub world: HittableList,
     pub camera: Camera,
+    pub background: Vec3,
 }
 
 pub fn random_scene() -> Scene {
@@ -115,7 +117,11 @@ pub fn random_scene() -> Scene {
         dist_to_focus,
     );
 
-    return Scene { world, camera };
+    return Scene {
+        world,
+        camera,
+        background: Vec3::new(0.7, 0.8, 1.0),
+    };
 }
 
 pub fn random_spheres() -> Scene {
@@ -219,5 +225,81 @@ pub fn random_spheres() -> Scene {
         dist_to_focus,
     );
 
-    return Scene { world, camera };
+    return Scene {
+        world,
+        camera,
+        background: Vec3::new(0.7, 0.8, 1.0),
+    };
+}
+
+pub fn glowing_sphere() -> Scene {
+    let mut world = HittableList::new();
+
+    let checker_texture = CheckerTexture::new(
+        Box::new(SolidColor::new(Vec3::new(0.2, 0.3, 0.1))),
+        Box::new(SolidColor::new(Vec3::new(0.9, 0.9, 0.9))),
+    );
+    let ground_material = Lambertian::new(Box::new(checker_texture));
+
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Box::new(ground_material),
+    )));
+
+    let material_1 = DiffuseLight::from_color(Vec3::new(1.0, 1.0, 1.0));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, 1.0, 0.0),
+        1.0,
+        Box::new(material_1),
+    )));
+
+    let material_2 = Lambertian::new(Box::new(SolidColor::new(Vec3::new(0.4, 0.2, 0.1))));
+
+    world.add(Box::new(Sphere::new(
+        Vec3::new(-4.0, 1.0, 0.0),
+        1.0,
+        Box::new(material_2),
+    )));
+
+    let material_3 = Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0);
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.5, 0.5, 1.5),
+        0.5,
+        Box::new(material_3),
+    )));
+
+    let material_4 = Dielectric::new(1.5);
+    world.add(Box::new(Sphere::new(
+        Vec3::new(1.5, 0.75, -1.5),
+        0.75,
+        Box::new(material_4),
+    )));
+
+    // Camera
+    let lookfrom = Vec3::new(6.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 1.0, 0.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+
+    let fov = 30.0;
+    let aperture = 0.1;
+    let dist_to_focus = (lookfrom - lookat).length();
+
+    // Define the Camera
+    let camera = Camera::new(
+        lookfrom,
+        lookat,
+        vup,
+        fov,
+        ASPECT_RATIO,
+        aperture,
+        dist_to_focus,
+    );
+
+    return Scene {
+        world,
+        camera,
+        // background: Vec3::new(0.7, 0.8, 1.0),
+        background: Vec3::ZERO,
+    };
 }
