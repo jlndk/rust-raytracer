@@ -9,6 +9,7 @@ use crate::material::Dielectric;
 use crate::material::DiffuseLight;
 use crate::material::Lambertian;
 use crate::material::Metal;
+use crate::rect::RectXY;
 use crate::sphere::Sphere;
 use crate::texture::CheckerTexture;
 use crate::texture::SolidColor;
@@ -229,6 +230,72 @@ pub fn random_spheres() -> Scene {
         world,
         camera,
         background: Vec3::new(0.7, 0.8, 1.0),
+    };
+}
+
+pub fn simple_light() -> Scene {
+    let mut world = HittableList::new();
+
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Box::new(Lambertian::new(Box::new(CheckerTexture::new(
+            Box::new(SolidColor::new(Vec3::new(0.2, 0.3, 0.1))),
+            Box::new(SolidColor::new(Vec3::new(0.9, 0.9, 0.9))),
+        )))),
+    )));
+
+    let material_1 = Lambertian::new(Box::new(SolidColor::new(Vec3::new(0.44, 0.13, 0.84))));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, 2.0, 0.0),
+        2.0,
+        Box::new(material_1),
+    )));
+
+    let rect_light_1 = DiffuseLight::from_color(Vec3::new(4.0, 4.0, 4.0));
+    world.add(Box::new(RectXY::new(
+        -2.0,
+        2.0,
+        1.0,
+        4.0,
+        -4.0,
+        Box::new(rect_light_1),
+    )));
+
+    let rect_light_2 = DiffuseLight::from_color(Vec3::new(4.0, 4.0, 4.0));
+    world.add(Box::new(RectXY::new(
+        -2.0,
+        2.0,
+        1.0,
+        4.0,
+        4.0,
+        Box::new(rect_light_2),
+    )));
+
+    // Camera
+    let lookfrom = Vec3::new(15.0, 3.0, 3.0);
+    let lookat = Vec3::new(0.0, 2.0, 0.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+
+    let fov = 25.0;
+    let aperture = 0.01;
+    let dist_to_focus = (lookfrom - lookat).length();
+
+    // Define the Camera
+    let camera = Camera::new(
+        lookfrom,
+        lookat,
+        vup,
+        fov,
+        ASPECT_RATIO,
+        aperture,
+        dist_to_focus,
+    );
+
+    return Scene {
+        world,
+        camera,
+        background: Vec3::new(0.0, 0.0, 0.0),
     };
 }
 

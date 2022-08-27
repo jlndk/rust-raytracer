@@ -13,6 +13,7 @@ mod hittable;
 mod hittable_list;
 mod material;
 mod ray;
+mod rect;
 mod scene;
 mod sphere;
 mod texture;
@@ -58,7 +59,8 @@ fn main() {
 
     // let selected_scene = scene::random_spheres();
     // let selected_scene = scene::random_scene();
-    let selected_scene = scene::glowing_sphere();
+    let selected_scene = scene::simple_light();
+    // let selected_scene = scene::glowing_sphere();
 
     // Put scene in an ARC to share it across threads
     let shared_world = Arc::new(selected_scene.world);
