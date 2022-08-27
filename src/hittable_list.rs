@@ -1,17 +1,7 @@
-use glam::Vec3;
-use rand::Rng;
-
 use crate::bvh::AxisAlignedBoundingBox;
 use crate::hittable::HitRecord;
 use crate::hittable::Hittable;
-use crate::material::Dielectric;
-use crate::material::Lambertian;
-use crate::material::Metal;
 use crate::ray::Ray;
-use crate::sphere::Sphere;
-use crate::texture::CheckerTexture;
-use crate::texture::SolidColor;
-use crate::vec3::Vec3Extension;
 
 pub struct HittableList {
     pub objects: Vec<Box<dyn Hittable + Send + Sync>>,
@@ -62,84 +52,5 @@ impl HittableList {
 
     pub fn add(&mut self, object: Box<dyn Hittable + Send + Sync>) {
         self.objects.push(object);
-    }
-
-    pub fn random_scene() -> HittableList {
-        let mut world = HittableList::new();
-
-        let mut rng = rand::thread_rng();
-
-        let checker_texture = CheckerTexture::new(
-            Box::new(SolidColor::new(Vec3::new(0.2, 0.3, 0.1))),
-            Box::new(SolidColor::new(Vec3::new(0.9, 0.9, 0.9))),
-        );
-        let ground_material = Lambertian::new(Box::new(checker_texture));
-
-        world.add(Box::new(Sphere::new(
-            Vec3::new(0.0, -1000.0, 0.0),
-            1000.0,
-            Box::new(ground_material),
-        )));
-
-        let center_clear_dist = Vec3::new(4.0, 0.2, 0.0);
-
-        for a in -11..11 {
-            for b in -11..11 {
-                let x = (a as f32) + 0.9 * rng.gen_range(0.0..=1.0);
-                let y = 0.2;
-                let z = (b as f32) + 0.9 * rng.gen_range(0.0..=1.0);
-
-                let center = Vec3::new(x, y, z);
-
-                if (center - center_clear_dist).length() > 0.9 {
-                    let mut rng = rand::thread_rng();
-
-                    let probability = rng.gen_range(0.0..=1.0);
-
-                    // diffuse
-                    if probability < 0.8 {
-                        let albedo = Vec3::rand() * Vec3::rand();
-                        let material = Lambertian::new(Box::new(SolidColor::new(albedo)));
-                        world.add(Box::new(Sphere::new(center, 0.2, Box::new(material))));
-                    }
-                    // metal
-                    else if probability < 0.95 {
-                        let albedo = Vec3::rand_range(0.5, 1.0);
-                        let fuzz = rng.gen_range(0.0..=0.5);
-                        let material = Metal::new(albedo, fuzz);
-                        world.add(Box::new(Sphere::new(center, 0.2, Box::new(material))));
-                    }
-                    // glass
-                    else {
-                        let material = Dielectric::new(1.5);
-                        world.add(Box::new(Sphere::new(center, 0.2, Box::new(material))));
-                    }
-                }
-            }
-        }
-
-        let material_1 = Dielectric::new(1.5);
-        world.add(Box::new(Sphere::new(
-            Vec3::new(0.0, 1.0, 0.0),
-            1.0,
-            Box::new(material_1),
-        )));
-
-        let material_2 = Lambertian::new(Box::new(SolidColor::new(Vec3::new(0.4, 0.2, 0.1))));
-
-        world.add(Box::new(Sphere::new(
-            Vec3::new(-4.0, 1.0, 0.0),
-            1.0,
-            Box::new(material_2),
-        )));
-
-        let material_3 = Metal::new(Vec3::new(0.7, 0.6, 0.5), 0.0);
-        world.add(Box::new(Sphere::new(
-            Vec3::new(4.0, 1.0, 0.0),
-            1.0,
-            Box::new(material_3),
-        )));
-
-        return world;
     }
 }

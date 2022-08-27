@@ -14,6 +14,7 @@ mod hittable;
 mod hittable_list;
 mod material;
 mod ray;
+mod scene;
 mod sphere;
 mod texture;
 mod vec3;
@@ -32,27 +33,21 @@ const BLUE: Vec3 = Vec3::new(0.5, 0.7, 1.0);
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
 // const IMAGE_WIDTH: i32 = 400;
 // const IMAGE_WIDTH: i32 = 600;
+// const IMAGE_WIDTH: i32 = 1200;
 const IMAGE_WIDTH: i32 = 1920;
 const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as i32;
 
+// const SAMPLES_PER_PIXEL: i32 = 3;
 // const SAMPLES_PER_PIXEL: i32 = 5;
 // const SAMPLES_PER_PIXEL: i32 = 10;
 // const SAMPLES_PER_PIXEL: i32 = 50;
-const SAMPLES_PER_PIXEL: i32 = 100;
+// const SAMPLES_PER_PIXEL: i32 = 100;
+const SAMPLES_PER_PIXEL: i32 = 200;
 
 // const MAX_DEPTH: i32 = 3;
 // const MAX_DEPTH: i32 = 6;
 // const MAX_DEPTH: i32 = 12;
 const MAX_DEPTH: i32 = 50;
-
-// Camera
-const LOOKFROM: Vec3 = Vec3::new(13.0, 2.0, 3.0);
-const LOOKAT: Vec3 = Vec3::new(0.0, 0.0, 0.0);
-const VUP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
-
-const FOV: f32 = 20.0;
-const APERTURE: f32 = 0.1;
-const DIST_TO_FOCUS: f32 = 10.0;
 
 /**
  * COMPUTED CONSTANTS
@@ -64,20 +59,13 @@ fn main() {
     // First of all, print the relavant rendering constants to the user
     print_rendering_info();
 
-    // Generate the scene (placing random spheres on a plane).
-    // Put it in an ARC to share it across threads
-    let shared_world = Arc::new(HittableList::random_scene());
+    let selected_scene = scene::random_spheres();
+    // let selected_scene = scene::random_scene();
 
-    // Define the Camera
-    let camera = Camera::new(
-        LOOKFROM,
-        LOOKAT,
-        VUP,
-        FOV,
-        ASPECT_RATIO,
-        APERTURE,
-        DIST_TO_FOCUS,
-    );
+    // Put scene in an ARC to share it across threads
+    let shared_world = Arc::new(selected_scene.world);
+
+    let camera = selected_scene.camera;
 
     // Start timer to figure out how long the render took
     let start = Instant::now();
@@ -186,7 +174,7 @@ fn compute_ray_color(ray: Ray, world: &HittableList, depth: i32) -> Vec3 {
             None => Vec3::ZERO,
         },
         None => {
-            let t = ray.direction.normalize().y + 1.0;
+            let t = 0.5 * (ray.direction.normalize().y + 1.0);
             return WHITE.lerp(BLUE, t);
         }
     }
