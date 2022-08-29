@@ -27,6 +27,10 @@ impl Lambertian {
     pub const fn new(albedo: Box<dyn Texture>) -> Self {
         return Self { albedo };
     }
+
+    pub fn from_color(color: Vec3) -> Self {
+        return Self::new(Box::new(SolidColor::new(color)));
+    }
 }
 
 impl Material for Lambertian {

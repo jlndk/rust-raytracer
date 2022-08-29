@@ -10,6 +10,8 @@ use crate::material::DiffuseLight;
 use crate::material::Lambertian;
 use crate::material::Metal;
 use crate::rect::RectXY;
+use crate::rect::RectXZ;
+use crate::rect::RectYZ;
 use crate::sphere::Sphere;
 use crate::texture::CheckerTexture;
 use crate::texture::SolidColor;
@@ -57,7 +59,7 @@ pub fn random_scene() -> Scene {
                 // diffuse
                 if probability < 0.8 {
                     let albedo = Vec3::rand() * Vec3::rand();
-                    let material = Lambertian::new(Box::new(SolidColor::new(albedo)));
+                    let material = Lambertian::from_color(albedo);
                     world.add(Box::new(Sphere::new(center, 0.2, Box::new(material))));
                 }
                 // metal
@@ -83,7 +85,7 @@ pub fn random_scene() -> Scene {
         Box::new(material_1),
     )));
 
-    let material_2 = Lambertian::new(Box::new(SolidColor::new(Vec3::new(0.4, 0.2, 0.1))));
+    let material_2 = Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1));
 
     world.add(Box::new(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
@@ -146,16 +148,12 @@ pub fn random_spheres() -> Scene {
     world.add(Box::new(Sphere::new(
         Vec3::new(1.25, 10.5, 1.0),
         0.4,
-        Box::new(Lambertian::new(Box::new(SolidColor::new(Vec3::new(
-            0.7, 0.2, 0.3,
-        ))))),
+        Box::new(Lambertian::from_color(Vec3::new(0.7, 0.2, 0.3))),
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(0.5, 10.3, -1.0125),
         0.3,
-        Box::new(Lambertian::new(Box::new(SolidColor::new(Vec3::new(
-            0.2, 0.3, 0.7,
-        ))))),
+        Box::new(Lambertian::from_color(Vec3::new(0.2, 0.3, 0.7))),
     )));
     world.add(Box::new(Sphere::new(
         Vec3::new(1.4, 10.3, -0.5),
@@ -187,7 +185,7 @@ pub fn random_spheres() -> Scene {
             // diffuse
             if probability < 0.8 {
                 let albedo = Vec3::rand() * Vec3::rand();
-                let material = Lambertian::new(Box::new(SolidColor::new(albedo)));
+                let material = Lambertian::from_color(albedo);
                 world.add(Box::new(Sphere::new(center, 0.1, Box::new(material))));
             }
             // metal
@@ -245,7 +243,7 @@ pub fn simple_light() -> Scene {
         )))),
     )));
 
-    let material_1 = Lambertian::new(Box::new(SolidColor::new(Vec3::new(0.44, 0.13, 0.84))));
+    let material_1 = Lambertian::from_color(Vec3::new(0.44, 0.13, 0.84));
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, 2.0, 0.0),
         2.0,
@@ -321,7 +319,7 @@ pub fn glowing_sphere() -> Scene {
         Box::new(material_1),
     )));
 
-    let material_2 = Lambertian::new(Box::new(SolidColor::new(Vec3::new(0.4, 0.2, 0.1))));
+    let material_2 = Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1));
 
     world.add(Box::new(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
@@ -368,5 +366,93 @@ pub fn glowing_sphere() -> Scene {
         camera,
         // background: Vec3::new(0.7, 0.8, 1.0),
         background: Vec3::ZERO,
+    };
+}
+
+pub fn cornell_box() -> Scene {
+    let mut world = HittableList::new();
+
+    world.add(Box::new(RectYZ::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        // green
+        Box::new(Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15))),
+    )));
+    world.add(Box::new(RectYZ::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        // red
+        Box::new(Lambertian::from_color(Vec3::new(0.65, 0.5, 0.05))),
+    )));
+
+    world.add(Box::new(RectXZ::new(
+        213.0,
+        343.0,
+        227.0,
+        332.0,
+        554.0,
+        // light
+        Box::new(DiffuseLight::from_color(Vec3::new(15.0, 15.0, 15.0))),
+    )));
+    world.add(Box::new(RectXZ::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        // white
+        Box::new(Lambertian::from_color(Vec3::new(0.73, 0.73, 0.73))),
+    )));
+    world.add(Box::new(RectXZ::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        // white
+        Box::new(Lambertian::from_color(Vec3::new(0.73, 0.73, 0.73))),
+    )));
+
+    world.add(Box::new(RectXY::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        // white
+        Box::new(Lambertian::from_color(Vec3::new(0.73, 0.73, 0.73))),
+    )));
+
+    // Camera
+    let lookfrom = Vec3::new(278.0, 278.0, -800.0);
+    let lookat = Vec3::new(278.0, 278.0, 0.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+
+    let fov = 40.0;
+    let aperture = 0.1;
+    let dist_to_focus = (lookfrom - lookat).length();
+
+    // Define the Camera
+    let camera = Camera::new(
+        lookfrom,
+        lookat,
+        vup,
+        fov,
+        ASPECT_RATIO,
+        aperture,
+        dist_to_focus,
+    );
+
+    return Scene {
+        world,
+        camera,
+        background: Vec3::ZERO,
+        // background: Vec3::new(0.7, 0.8, 1.0),
     };
 }

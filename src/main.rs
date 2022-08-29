@@ -28,24 +28,24 @@ use ray::Ray;
 // Image
 const ASPECT_RATIO: f32 = 16.0 / 9.0;
 // const IMAGE_WIDTH: i32 = 400;
-// const IMAGE_WIDTH: i32 = 600;
+const IMAGE_WIDTH: i32 = 600;
 // const IMAGE_WIDTH: i32 = 1200;
-const IMAGE_WIDTH: i32 = 1920;
+// const IMAGE_WIDTH: i32 = 1920;
 const IMAGE_HEIGHT: i32 = (IMAGE_WIDTH as f32 / ASPECT_RATIO) as i32;
 
 // const SAMPLES_PER_PIXEL: i32 = 3;
 // const SAMPLES_PER_PIXEL: i32 = 5;
-// const SAMPLES_PER_PIXEL: i32 = 10;
+const SAMPLES_PER_PIXEL: i32 = 10;
 // const SAMPLES_PER_PIXEL: i32 = 50;
 // const SAMPLES_PER_PIXEL: i32 = 100;
 // const SAMPLES_PER_PIXEL: i32 = 200;
-const SAMPLES_PER_PIXEL: i32 = 2000;
+// const SAMPLES_PER_PIXEL: i32 = 2000;
 
 // const MAX_DEPTH: i32 = 3;
 // const MAX_DEPTH: i32 = 6;
 // const MAX_DEPTH: i32 = 12;
-// const MAX_DEPTH: i32 = 50;
-const MAX_DEPTH: i32 = 200;
+const MAX_DEPTH: i32 = 50;
+// const MAX_DEPTH: i32 = 200;
 
 /**
  * COMPUTED CONSTANTS
@@ -59,8 +59,9 @@ fn main() {
 
     // let selected_scene = scene::random_spheres();
     // let selected_scene = scene::random_scene();
-    let selected_scene = scene::simple_light();
+    // let selected_scene = scene::simple_light();
     // let selected_scene = scene::glowing_sphere();
+    let selected_scene = scene::cornell_box();
 
     // Put scene in an ARC to share it across threads
     let shared_world = Arc::new(selected_scene.world);
